@@ -1,0 +1,35 @@
+[project]
+name = "netlens"
+version = "0.1.0"
+description = "Evidence-first diagnostics for uploaded packet captures"
+requires-python = ">=3.12,<3.15"
+dependencies = [
+  "fastapi==0.148.0", "uvicorn==0.54.0", "pydantic-settings==2.16.0", "sqlalchemy==2.1.5", "alembic==1.20.0",
+  "psycopg[binary]==3.3.6", "redis==8.1.0", "rq==2.12.0", "scapy==2.8.0", "httpx==0.28.1", "python-multipart==0.0.32",
+]
+
+[dependency-groups]
+dev = ["pytest==9.1.1", "pytest-cov==7.1.0", "ruff==0.17.1"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/netlens"]
+
+[project.scripts]
+netlens = "netlens.cli:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = ["integration: requires isolated PostgreSQL and Redis services"]
+addopts = "-ra"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
