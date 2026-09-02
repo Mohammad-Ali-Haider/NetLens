@@ -1,0 +1,8 @@
+[
+  {
+    "detector": "tcp.reset",
+    "packet_refs": [
+      1
+    ]
+  }
+]

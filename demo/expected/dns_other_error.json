@@ -1,0 +1,9 @@
+[
+  {
+    "detector": "dns.error",
+    "packet_refs": [
+      1,
+      2
+    ]
+  }
+]

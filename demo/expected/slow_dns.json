@@ -1,0 +1,9 @@
+[
+  {
+    "detector": "dns.slow_response",
+    "packet_refs": [
+      1,
+      2
+    ]
+  }
+]

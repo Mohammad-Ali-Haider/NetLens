@@ -1,0 +1,8 @@
+[
+  {
+    "detector": "tcp.incomplete_handshake",
+    "packet_refs": [
+      1
+    ]
+  }
+]

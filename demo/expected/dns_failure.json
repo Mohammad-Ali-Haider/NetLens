@@ -1,0 +1,9 @@
+[
+  {
+    "detector": "dns.nxdomain",
+    "packet_refs": [
+      1,
+      2
+    ]
+  }
+]
