@@ -129,3 +129,41 @@ class OpenAIProvider(HTTPProvider):
             return self.parse(text, data.get("model", s.openai_model), usage)
         except (KeyError, TypeError, AttributeError) as exc:
             raise ProviderError("malformed_provider_output") from exc
+
+
+class AnthropicProvider(HTTPProvider):
+    def generate(self, context):
+        s = self.settings
+        if not s.anthropic_api_key:
+            raise ProviderError("missing_credentials")
+        data = self.post(
+            "https://api.anthropic.com/v1/messages",
+            {
+                "x-api-key": s.anthropic_api_key.get_secret_value(),
+                "anthropic-version": "2023-06-01",
+            },
+            {
+                "model": s.anthropic_model,
+                "system": SYSTEM,
+                "max_tokens": s.output_tokens,
+                "messages": [{"role": "user", "content": json.dumps(context)}],
+                "output_config": {"format": {"type": "json_schema", "schema": anthropic_schema()}},
+            },
+        )
+        try:
+            if data.get("stop_reason") != "end_turn":
+                raise ProviderError("incomplete_provider_output")
+            text = "".join(b["text"] for b in data["content"] if b.get("type") == "text")
+            usage = data.get("usage")
+            usage = (
+                {
+                    k: usage[k]
+                    for k in ("input_tokens", "output_tokens")
+                    if isinstance(usage.get(k), int)
+                }
+                if usage
+                else None
+            )
+            return self.parse(text, data.get("model", s.anthropic_model), usage)
+        except (KeyError, TypeError, AttributeError) as exc:
+            raise ProviderError("malformed_provider_output") from exc
