@@ -167,3 +167,33 @@ class AnthropicProvider(HTTPProvider):
             return self.parse(text, data.get("model", s.anthropic_model), usage)
         except (KeyError, TypeError, AttributeError) as exc:
             raise ProviderError("malformed_provider_output") from exc
+
+
+class OllamaProvider(HTTPProvider):
+    def generate(self, context):
+        s = self.settings
+        data = self.post(
+            s.ollama_url.rstrip("/") + "/api/chat",
+            {},
+            {
+                "model": s.ollama_model,
+                "stream": False,
+                "format": ReportContent.model_json_schema(),
+                "options": {"num_predict": s.output_tokens, "temperature": 0},
+                "messages": [
+                    {"role": "system", "content": SYSTEM},
+                    {"role": "user", "content": json.dumps(context)},
+                ],
+            },
+        )
+        try:
+            if not data.get("done") or data.get("done_reason") == "length":
+                raise ProviderError("incomplete_provider_output")
+            usage = {
+                k: data[k]
+                for k in ("prompt_eval_count", "eval_count")
+                if isinstance(data.get(k), int)
+            } or None
+            return self.parse(data["message"]["content"], data.get("model", s.ollama_model), usage)
+        except (KeyError, TypeError, AttributeError) as exc:
+            raise ProviderError("malformed_provider_output") from exc
