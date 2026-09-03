@@ -90,3 +90,71 @@ def delete_capture(session, storage, capture_id):
 @router.delete("/captures/{capture_id}", status_code=204)
 def remove_capture(capture_id: str, request: Request, session: Session):
     delete_capture(session, request.app.state.storage, capture_id)
+
+
+def create_operation(request, session, kind, capture_id, analysis_id, params, key):
+    scope = "analyses" if kind == "analysis" else f"reports:{analysis_id}"
+    fingerprint = hashlib.sha256(
+        json.dumps({"capture_id": capture_id, "parameters": params}, sort_keys=True).encode()
+    ).hexdigest()
+
+    def existing():
+        row = (
+            session.scalar(
+                select(Operation).where(Operation.scope == scope, Operation.idempotency_key == key)
+            )
+            if key
+            else None
+        )
+        if row and row.request_hash != fingerprint:
+            raise HTTPException(409, "Idempotency key was already used with different parameters.")
+        return row
+
+    op = existing()
+    if op is None:
+        capture = session.scalar(select(Capture).where(Capture.id == capture_id).with_for_update())
+        if capture is None:
+            raise HTTPException(404, "Resource not found.")
+        op = existing()
+        if op is None:
+            op = Operation(
+                kind=kind,
+                capture_id=capture_id,
+                analysis_id=analysis_id,
+                scope=scope,
+                idempotency_key=key,
+                request_hash=fingerprint,
+                parameters=params,
+            )
+            session.add(op)
+            try:
+                session.commit()
+            except IntegrityError:
+                session.rollback()
+                op = existing()
+                if op is None:
+                    raise
+    session.commit()
+    dispatch(op.id, request.app.state.factory, request.app.state.settings)
+    session.refresh(op)
+    return op
+
+
+@router.post("/analyses", status_code=202, response_model=AnalysisOut)
+def start_analysis(
+    payload: AnalysisIn, request: Request, session: Session, idempotency_key: Idempotency = None
+):
+    return create_operation(
+        request,
+        session,
+        "analysis",
+        payload.capture_id,
+        None,
+        {"dns_slow_ms": payload.dns_slow_ms or request.app.state.settings.dns_slow_ms},
+        idempotency_key,
+    )
+
+
+@router.get("/analyses/{analysis_id}", response_model=AnalysisOut)
+def get_analysis(analysis_id: str, session: Session):
+    return required(session, Operation, analysis_id, "analysis")
