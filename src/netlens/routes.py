@@ -68,3 +68,25 @@ def upload(request: Request, file: UploadFile, session: Session):
 @router.get("/captures/{capture_id}", response_model=CaptureOut)
 def get_capture(capture_id: str, session: Session):
     return required(session, Capture, capture_id)
+
+
+def delete_capture(session, storage, capture_id):
+    capture = session.scalar(select(Capture).where(Capture.id == capture_id).with_for_update())
+    if not capture:
+        raise HTTPException(404, "Resource not found.")
+    active = session.scalar(
+        select(Operation.id)
+        .where(Operation.capture_id == capture_id, Operation.status.in_(["queued", "running"]))
+        .limit(1)
+    )
+    if active:
+        raise HTTPException(409, "Capture has active jobs.")
+    name = capture.storage_name
+    session.delete(capture)
+    session.commit()
+    storage.delete(name)
+
+
+@router.delete("/captures/{capture_id}", status_code=204)
+def remove_capture(capture_id: str, request: Request, session: Session):
+    delete_capture(session, request.app.state.storage, capture_id)
