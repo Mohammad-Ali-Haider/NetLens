@@ -37,3 +37,34 @@ def required(session, model, identifier, kind=None):
     if row is None or (kind and row.kind != kind):
         raise HTTPException(404, "Resource not found.")
     return row
+
+
+@router.post("/captures", status_code=201, response_model=CaptureOut)
+def upload(request: Request, file: UploadFile, session: Session):
+    storage = request.app.state.storage
+    settings = request.app.state.settings
+    name, size, digest = storage.save(file.file, settings.max_upload_bytes)
+    try:
+        parsed = parse_capture(storage.path(name), settings)
+        filename = PurePosixPath((file.filename or "capture").replace("\\", "/")).name[:255]
+        capture = Capture(
+            filename=filename,
+            storage_name=name,
+            size_bytes=size,
+            sha256=digest,
+            format=parsed.format,
+            packet_count=len(parsed.packets),
+            warnings=parsed.warnings,
+        )
+        session.add(capture)
+        session.commit()
+        return capture
+    except BaseException:
+        session.rollback()
+        storage.delete(name)
+        raise
+
+
+@router.get("/captures/{capture_id}", response_model=CaptureOut)
+def get_capture(capture_id: str, session: Session):
+    return required(session, Capture, capture_id)
