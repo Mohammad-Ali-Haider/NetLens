@@ -158,3 +158,24 @@ def start_analysis(
 @router.get("/analyses/{analysis_id}", response_model=AnalysisOut)
 def get_analysis(analysis_id: str, session: Session):
     return required(session, Operation, analysis_id, "analysis")
+
+
+@router.get("/analyses/{analysis_id}/findings", response_model=FindingsPage)
+def get_findings(
+    analysis_id: str,
+    session: Session,
+    offset: Annotated[int, Query(ge=0)] = 0,
+    limit: Annotated[int, Query(ge=1, le=100)] = 50,
+):
+    required(session, Operation, analysis_id, "analysis")
+    criterion = FindingRow.analysis_id == analysis_id
+    total = session.scalar(select(func.count()).select_from(FindingRow).where(criterion))
+    rows = session.scalars(
+        select(FindingRow).where(criterion).order_by(FindingRow.ordinal).offset(offset).limit(limit)
+    )
+    return FindingsPage(
+        items=[Finding.model_validate(r.data) for r in rows],
+        total=total,
+        offset=offset,
+        limit=limit,
+    )
