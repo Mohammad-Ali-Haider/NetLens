@@ -179,3 +179,30 @@ def get_findings(
         offset=offset,
         limit=limit,
     )
+
+
+@router.post("/analyses/{analysis_id}/reports", status_code=202, response_model=ReportOut)
+def start_report(
+    analysis_id: str,
+    payload: ReportIn,
+    request: Request,
+    session: Session,
+    idempotency_key: Idempotency = None,
+):
+    analysis = required(session, Operation, analysis_id, "analysis")
+    if analysis.status != "succeeded":
+        raise HTTPException(409, "Analysis must succeed before generating a report.")
+    return create_operation(
+        request,
+        session,
+        "report",
+        analysis.capture_id,
+        analysis_id,
+        payload.model_dump(),
+        idempotency_key,
+    )
+
+
+@router.get("/reports/{report_id}", response_model=ReportOut)
+def get_report(report_id: str, session: Session):
+    return required(session, Operation, report_id, "report")
