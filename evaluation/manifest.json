@@ -1,0 +1,146 @@
+{
+  "version": 1,
+  "scenarios": [
+    {
+      "id": "healthy",
+      "path": "demo/captures/healthy.pcap",
+      "expected": [],
+      "limitations": [
+        "Synthetic, small, single vantage point."
+      ]
+    },
+    {
+      "id": "dns_failure",
+      "path": "demo/captures/dns_failure.pcap",
+      "expected": [
+        {
+          "detector": "dns.nxdomain",
+          "packet_refs": [
+            1,
+            2
+          ]
+        }
+      ],
+      "limitations": [
+        "Synthetic, small, single vantage point."
+      ]
+    },
+    {
+      "id": "dns_other_error",
+      "path": "demo/captures/dns_other_error.pcap",
+      "expected": [
+        {
+          "detector": "dns.error",
+          "packet_refs": [
+            1,
+            2
+          ]
+        }
+      ],
+      "limitations": [
+        "Synthetic, small, single vantage point."
+      ]
+    },
+    {
+      "id": "unanswered",
+      "path": "demo/captures/unanswered.pcap",
+      "expected": [
+        {
+          "detector": "dns.unanswered",
+          "packet_refs": [
+            1
+          ]
+        }
+      ],
+      "limitations": [
+        "Synthetic, small, single vantage point."
+      ]
+    },
+    {
+      "id": "tcp_reset",
+      "path": "demo/captures/tcp_reset.pcap",
+      "expected": [
+        {
+          "detector": "tcp.reset",
+          "packet_refs": [
+            1
+          ]
+        }
+      ],
+      "limitations": [
+        "Synthetic, small, single vantage point."
+      ]
+    },
+    {
+      "id": "incomplete",
+      "path": "demo/captures/incomplete.pcap",
+      "expected": [
+        {
+          "detector": "tcp.incomplete_handshake",
+          "packet_refs": [
+            1
+          ]
+        }
+      ],
+      "limitations": [
+        "Synthetic, small, single vantage point."
+      ]
+    },
+    {
+      "id": "slow_dns",
+      "path": "demo/captures/slow_dns.pcap",
+      "expected": [
+        {
+          "detector": "dns.slow_response",
+          "packet_refs": [
+            1,
+            2
+          ]
+        }
+      ],
+      "limitations": [
+        "Synthetic, small, single vantage point."
+      ]
+    },
+    {
+      "id": "ipv6",
+      "path": "demo/captures/ipv6.pcap",
+      "expected": [],
+      "limitations": [
+        "Synthetic, small, single vantage point."
+      ]
+    },
+    {
+      "id": "empty",
+      "path": "demo/captures/empty.pcap",
+      "expected": [],
+      "limitations": [
+        "Synthetic, small, single vantage point."
+      ]
+    },
+    {
+      "id": "pcapng",
+      "path": "demo/captures/ipv6.pcapng",
+      "expected": [],
+      "limitations": [
+        "Single interface."
+      ]
+    },
+    {
+      "id": "malformed",
+      "path": "demo/captures/malformed.pcap",
+      "expected_error": true,
+      "limitations": [
+        "Rejected during ingestion."
+      ]
+    },
+    {
+      "id": "truncated",
+      "path": "demo/captures/truncated.pcap",
+      "expected_error": true,
+      "limitations": [
+        "Rejected during ingestion."
+      ]
+    }
+  ]
+}
