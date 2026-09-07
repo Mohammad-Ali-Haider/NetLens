@@ -1,0 +1,12 @@
+.git
+.venv
+.uv-cache
+.env
+data
+__pycache__
+.pytest_cache
+.ruff_cache
+htmlcov
+.coverage
+.local/
+evaluation/results/

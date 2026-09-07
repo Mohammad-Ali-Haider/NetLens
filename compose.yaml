@@ -1,0 +1,84 @@
+name: netlens
+x-app: &app
+  build: .
+  image: netlens:local
+  environment: &env
+    NETLENS_DATABASE_URL: postgresql+psycopg://netlens:netlens-local@postgres:5432/netlens
+    NETLENS_REDIS_URL: redis://redis:6379/0
+    NETLENS_STORAGE_DIR: /app/data/captures
+    NETLENS_API_KEY: ${NETLENS_API_KEY:-change-me-local-only}
+    NETLENS_OPENAI_API_KEY: ${NETLENS_OPENAI_API_KEY:-}
+    NETLENS_OPENAI_MODEL: ${NETLENS_OPENAI_MODEL:-gpt-4.1-mini}
+    NETLENS_ANTHROPIC_API_KEY: ${NETLENS_ANTHROPIC_API_KEY:-}
+    NETLENS_ANTHROPIC_MODEL: ${NETLENS_ANTHROPIC_MODEL:-claude-sonnet-4-6}
+    NETLENS_OLLAMA_URL: ${NETLENS_OLLAMA_URL:-http://host.docker.internal:11434}
+    NETLENS_OLLAMA_MODEL: ${NETLENS_OLLAMA_MODEL:-llama3.2}
+  volumes: ["captures:/app/data"]
+  read_only: true
+  tmpfs: ["/tmp:size=64m,mode=1777"]
+  cap_drop: [ALL]
+  security_opt: ["no-new-privileges:true"]
+  mem_limit: 512m
+  cpus: 1.0
+  pids_limit: 128
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: netlens
+      POSTGRES_USER: netlens
+      POSTGRES_PASSWORD: netlens-local
+    ports: ["127.0.0.1:${NETLENS_DB_PORT:-5432}:5432"]
+    volumes: ["postgres:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U netlens -d netlens"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    mem_limit: 256m
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes", "--maxmemory", "128mb", "--maxmemory-policy", "noeviction"]
+    ports: ["127.0.0.1:${NETLENS_REDIS_PORT:-6379}:6379"]
+    volumes: ["redis:/data"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+    mem_limit: 192m
+  migrate:
+    <<: *app
+    command: ["alembic", "upgrade", "head"]
+    depends_on:
+      postgres: {condition: service_healthy}
+  api:
+    <<: *app
+    restart: unless-stopped
+    ports: ["127.0.0.1:${NETLENS_API_PORT:-8000}:8000"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health/ready', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+  worker:
+    <<: *app
+    restart: unless-stopped
+    command: ["netlens", "worker"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+  dispatcher:
+    <<: *app
+    restart: unless-stopped
+    command: ["netlens", "recover", "--loop"]
+    depends_on:
+      migrate: {condition: service_completed_successfully}
+      redis: {condition: service_healthy}
+volumes:
+  captures:
+  postgres:
+  redis:
