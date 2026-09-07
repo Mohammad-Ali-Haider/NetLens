@@ -1,0 +1,42 @@
+name: CI
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: netlens_test
+          POSTGRES_USER: netlens_test
+          POSTGRES_PASSWORD: test-only
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U netlens_test -d netlens_test"
+          --health-interval 3s --health-timeout 3s --health-retries 20
+      redis:
+        image: redis:7-alpine
+        ports: ["6379:6379"]
+        options: --health-cmd "redis-cli ping" --health-interval 3s --health-timeout 3s --health-retries 20
+    env:
+      NETLENS_TEST_DATABASE_URL: postgresql+psycopg://netlens_test:test-only@localhost:5432/netlens_test
+      NETLENS_TEST_REDIS_URL: redis://localhost:6379/15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.10.2"
+          python-version: "3.12"
+      - run: uv sync --locked
+      - run: uv run ruff check .
+      - run: uv run ruff format --check .
+      - run: uv run pytest --cov=netlens --cov-report=term-missing
+      - run: uv run netlens evaluate
+      - uses: actions/upload-artifact@v4
+        with:
+          name: evaluation
+          path: evaluation/results/mock/
+      - run: docker compose config --quiet
+      - run: docker build -t netlens:ci .
