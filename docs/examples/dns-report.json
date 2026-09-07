@@ -1,0 +1,40 @@
+{
+  "id": "09ae8fb7-db71-4abe-8d17-4ac4f16459cf",
+  "status": "succeeded",
+  "status_url": "/v1/reports/09ae8fb7-db71-4abe-8d17-4ac4f16459cf",
+  "created_at": "2026-10-20T09:19:02.519272",
+  "started_at": "2026-10-20T09:19:02.521273",
+  "finished_at": "2026-10-20T09:19:02.525880",
+  "attempts": 1,
+  "error_code": null,
+  "analysis_id": "05664d1a-926e-40d6-8fe8-a2d56f2476dd",
+  "provider": "mock",
+  "content": {
+    "summary": "The capture has 1 deterministic findings.",
+    "observed_issues": [
+      {
+        "finding_ids": [
+          "f-000001"
+        ],
+        "explanation": "Observed DNS NXDOMAIN response."
+      }
+    ],
+    "hypotheses": [],
+    "next_checks": [
+      "Compare a capture from the other endpoint and a longer time window."
+    ],
+    "evidence_limitations": [
+      "Capture visibility is incomplete; missing observations do not prove packet loss.",
+      "Encrypted application payloads are not inspected."
+    ]
+  },
+  "provider_metadata": {
+    "provider": "mock",
+    "model": "deterministic-v1",
+    "prompt_version": "netlens-report-1",
+    "latency_ms": 0.041,
+    "usage": null,
+    "estimated_cost_usd": null,
+    "fallback_from": null
+  }
+}

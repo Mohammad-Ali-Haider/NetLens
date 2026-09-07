@@ -1,0 +1,27 @@
+{
+  "items": [
+    {
+      "id": "f-000001",
+      "detector": "dns.nxdomain",
+      "detector_version": "1.0.0",
+      "severity": "warning",
+      "observation": "Observed DNS NXDOMAIN response.",
+      "measurements": {
+        "rcode": 3
+      },
+      "packet_refs": [
+        1,
+        2
+      ],
+      "limitations": [
+        "Only traffic visible in this capture is considered."
+      ],
+      "alternatives": [
+        "The negative response may be expected for the requested name."
+      ]
+    }
+  ],
+  "total": 1,
+  "offset": 0,
+  "limit": 50
+}

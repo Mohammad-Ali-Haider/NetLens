@@ -1,0 +1,12 @@
+{
+  "id": "eaaeee09-2da8-4826-b49e-9e39f20e1d49",
+  "filename": "dns_failure.pcap",
+  "size_bytes": 200,
+  "sha256": "b31913496a64621ee9a3ebfc774fa39d5d477dd525b7fe54f46f29be46661507",
+  "format": "pcap",
+  "packet_count": 2,
+  "warnings": [
+    "Capture boundaries and capture location limit observations."
+  ],
+  "created_at": "2026-10-20T09:19:02.479838Z"
+}
