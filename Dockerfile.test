@@ -1,0 +1,7 @@
+FROM netlens:local
+USER root
+RUN uv sync --locked --no-cache
+COPY tests ./tests
+ENV COVERAGE_FILE=/tmp/netlens.coverage
+USER 10001:10001
+CMD ["python", "-m", "pytest", "-o", "cache_dir=/tmp/pytest-cache", "--cov=netlens", "--cov-report=term-missing", "-v"]
